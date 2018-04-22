@@ -4,10 +4,20 @@ metadata:
   name: mongodb
 spec:
   ports:
-  - port: 3306
+  - port: 27017
   selector:
     app: mongodb
   clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yeo
+spec:
+  ports:
+  - port: 27017
+  selector:
+    app: mongodb
 ---
 apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
 kind: StatefulSet
