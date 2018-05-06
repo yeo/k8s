@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster
+spec:
+  ports:
+  - port: 6379
+    name: client
+  selector:
+    app: redis
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: redis
+spec:
+  serviceName: "redis"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: "redis:3.2.11"
+        name: redis
+        args:
+            - "redis-server"
+            - "--appendonly"
+            - "yes"
+        volumeMounts:
+        - name: redis-data-dir
+          mountPath: /data
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        ports:
+          - name: redis
+            containerPort: 6379
+            protocol: "TCP"
+      volumes:
+      - name: redis-data-dir
+        hostPath:
+          path: /opt/k8s/data/redis
+          type: Directory
