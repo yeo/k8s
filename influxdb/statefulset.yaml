@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: influx
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: influx
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster
+spec:
+  ports:
+  - port: 6379
+    name: client
+  selector:
+    app: influx
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: influx
+spec:
+  serviceName: "influx"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influx
+  template:
+    metadata:
+      labels:
+        app: influx
+    spec:
+      containers:
+      - image: "influxdb:1.5.2"
+        name: influx
+        volumeMounts:
+        - name: influx-data-dir
+          mountPath: /var/lib/influxdb
+        ports:
+          - name: influx
+            containerPort: 6379
+            protocol: "TCP"
+      volumes:
+      - name: influx-data-dir
+        hostPath:
+          path: /opt/k8s/data/influx
+          type: Directory
