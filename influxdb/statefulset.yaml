@@ -39,7 +39,7 @@ spec:
         app: influx
     spec:
       containers:
-      - image: "influxdb:1.6.3"
+      - image: "influxdb:1.7.3"
         name: influx
         volumeMounts:
         - name: influx-data-dir
