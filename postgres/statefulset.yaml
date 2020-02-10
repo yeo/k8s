@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432
+  selector:
+    app: postgres
+  clusterIP: None
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster
+spec:
+  ports:
+  - port: 5432
+    name: client
+  selector:
+    app: postgres
+
+---
+
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - image: "postgres:12.1"
+        name: postgres
+        volumeMounts:
+        - name: postgres-data-dir
+          mountPath: /var/lib/postgresql/dat
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+        ports:
+          - name: postgres
+            containerPort: 5432
+            protocol: "TCP"
+      volumes:
+      - name: postgres-data-dir
+        hostPath:
+          path: /opt/k8s/data/postgres
+          type: Directory
