@@ -1,0 +1,58 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: app
+  namespace: opty
+spec:
+  selector:
+    app: bima
+  ports:
+    - protocol: TCP
+      port: 4000
+      name: web
+
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: bima
+  namespace: opty
+spec:
+  secretName: bima-tls-secret
+  renewBefore: 12h
+  dnsNames:
+  - bima.getopty.com
+  acme:
+    config:
+    - http01:
+        ingressClass: nginx
+      domains:
+      - bima.getopty.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: bima
+  namespace: opty
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+spec:
+  tls:
+  - hosts:
+    - bima.getopty.com
+    secretName: bima-tls-secret
+  rules:
+  - host: bima.getopty.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app
+          servicePort: web
